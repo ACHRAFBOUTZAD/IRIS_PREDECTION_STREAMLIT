@@ -1,55 +1,37 @@
-import tensorflow as tf
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Dense
-from sklearn.datasets import load_iris
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import OneHotEncoder
-import numpy as np
 import streamlit as st
+import numpy as np
+import tensorflow as tf
+from sklearn.datasets import load_iris
+from sklearn.preprocessing import StandardScaler
 
-# Load IRIS dataset
-iris = load_iris()
-X = iris.data
-y = iris.target.reshape(-1, 1)
+# Charger le modèle sauvegardé
+model = tf.keras.models.load_model('iris_model.keras')
 
-# One-hot encode the labels
-encoder = OneHotEncoder(sparse_output=False)
-y = encoder.fit_transform(y)
+# Charger les données de l'iris
+data = load_iris()
+feature_names = data.feature_names
+class_names = data.target_names
 
-# Split the dataset into training and testing sets
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+# Fonction pour faire des prédictions
+def predict_iris_class(features):
+    # Redimensionner les caractéristiques pour correspondre à l'entrée du modèle
+    features = np.array(features).reshape(1, -1)
+    prediction = model.predict(features)
+    class_index = np.argmax(prediction, axis=1)[0]
+    return class_names[class_index]
 
-# Function to create and train a neural network model
-def create_and_train_iris_model(num_neurons, epochs=50):
-    # Build the model
-    model = Sequential()
-    model.add(Dense(num_neurons, activation='relu', input_shape=(4,)))  # Hidden layer with specified number of neurons
-    model.add(Dense(3, activation='softmax'))  # Output layer for 3 classes
+# Interface utilisateur de l'application Streamlit
+st.title("Prédiction des espèces de l'iris")
+st.write("Veuillez entrer les caractéristiques suivantes de la fleur Iris :")
 
-    # Compile the model
-    model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
+# Entrée des caractéristiques
+sepal_length = st.slider('Longueur du sépale (cm)', min_value=4.0, max_value=8.0, step=0.1)
+sepal_width = st.slider('Largeur du sépale (cm)', min_value=2.0, max_value=4.5, step=0.1)
+petal_length = st.slider('Longueur du pétale (cm)', min_value=1.0, max_value=7.0, step=0.1)
+petal_width = st.slider('Largeur du pétale (cm)', min_value=0.1, max_value=2.5, step=0.1)
 
-    # Train the model
-    model.fit(X_train, y_train, epochs=epochs, batch_size=8, validation_data=(X_test, y_test), verbose=0)
-
-    return model
-
-# Train the model
-model = create_and_train_iris_model(num_neurons=40, epochs=50)
-
-# Streamlit app
-st.title("Iris Flower Prediction App")
-
-# Input fields for iris features
-sepal_length = st.slider("Sepal Length (cm)", float(X[:, 0].min()), float(X[:, 0].max()), float(X[:, 0].mean()))
-sepal_width = st.slider("Sepal Width (cm)", float(X[:, 1].min()), float(X[:, 1].max()), float(X[:, 1].mean()))
-petal_length = st.slider("Petal Length (cm)", float(X[:, 2].min()), float(X[:, 2].max()), float(X[:, 2].mean()))
-petal_width = st.slider("Petal Width (cm)", float(X[:, 3].min()), float(X[:, 3].max()), float(X[:, 3].mean()))
-
-# Button to make prediction
-if st.button("Predict Iris Type"):
-    input_data = np.array([[sepal_length, sepal_width, petal_length, petal_width]])
-    prediction = model.predict(input_data)
-    predicted_class = np.argmax(prediction)
-    class_names = iris.target_names
-    st.write(f"Predicted Iris Type: {class_names[predicted_class]}")
+# Collecter les entrées utilisateur et prédire
+features = [sepal_length, sepal_width, petal_length, petal_width]
+if st.button("Prédire la classe de l'iris"):
+    predicted_class = predict_iris_class(features)
+    st.write(f'La classe prédite pour cette fleur est : **{predicted_class}**')

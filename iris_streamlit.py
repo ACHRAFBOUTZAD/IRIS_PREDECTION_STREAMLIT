@@ -3,6 +3,7 @@ import numpy as np
 import tensorflow as tf
 from sklearn.datasets import load_iris
 from sklearn.preprocessing import StandardScaler
+SKLEARN_ALLOW_DEPRECATED_SKLEARN_PACKAGE_INSTALL=True
 
 # Charger le modèle sauvegardé
 model = tf.keras.models.load_model('iris_model.keras')

@@ -1,0 +1,5 @@
+sklearn
+streamlit
+numpy
+tensorflow
+matplotlib
